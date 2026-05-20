@@ -50,6 +50,35 @@ async function run() {
       res.send(result);
     });
 
+    app.get('/bookings', async (req, res) => {
+      const cursor = appointmentsCollection.find();
+      const appointments = await cursor.toArray();
+      res.send(appointments);
+    });
+
+    app.delete('/bookings/:id', async (req, res)=>{
+      const {id} = req.params;
+      const query = {_id: new ObjectId(id)};
+      const result = await appointmentsCollection.deleteOne(query);
+      res.send(result);
+    })
+
+    app.patch('/bookings/:id', async (req, res)=>{
+      const {id} = req.params;
+      const modifiedBooking = req.body;
+      const filter = {_id: new ObjectId(id)};
+      const updateDoc = {
+        $set: {
+          name: modifiedBooking.name,
+          phone: modifiedBooking.phone,
+          date: modifiedBooking.date,
+          time: modifiedBooking.time
+        },
+      };
+      const result = await appointmentsCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    })
+
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
