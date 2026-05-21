@@ -2,6 +2,7 @@ const express = require('express');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const { jwtVerify, createRemoteJWKSet } = require('jose-cjs');
 
 dotenv.config();
 const app = express();
@@ -19,6 +20,43 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   }
 });
+const JWKS = createRemoteJWKSet(
+  new URL('http://localhost:3000/api/auth/jwks')
+);
+const logger = async (req, res, next) => {
+  const header = req.headers.authorization;
+
+  if (!header) {
+    return res.status(401).send({
+      message: 'Unauthorized'
+    });
+  }
+
+  const token = header.split(" ")[1];
+
+  if (!token) {
+    return res.status(401).send({
+      message: 'Unauthorized'
+    });
+  }
+
+  try {
+
+    const { payload } =
+      await jwtVerify(token, JWKS);
+
+    console.log(payload);
+
+    next();
+
+  } catch (error) {
+
+    return res.status(401).send({
+      message: 'Unauthorized'
+    });
+
+  }
+};
 
 async function run() {
   try {
@@ -34,29 +72,22 @@ async function run() {
     //   const doctors = await cursor.toArray();
     //   res.send(doctors);
     // })
-   app.get('/all-appointments', async (req, res) => {
+
+
+
+    app.get('/all-appointments', async (req, res) => {
       //   console.log(req.query);
 
       const { searchTerm } = req.query;
 
       let appointment;
-      //   console.log(search.search);
 
-      //   console.log('from serch 1', search);
       if (searchTerm) {
-        //   console.log('from serch 1');
 
-        // React core concept => Core
-        // cursor = await coursesCollection.find({
-        //   title: {
-        //     $regex: search,
-        //     $options: 'i',
-        //   },
-        // });
         appointment = await doctorsCollection.find({
           $or: [
             {
-             name: {
+              name: {
                 $regex: searchTerm,
                 $options: 'i',
               },
@@ -83,7 +114,7 @@ async function run() {
     });
 
 
-    app.get('/all-appointments/:id', async (req, res) => {
+    app.get('/all-appointments/:id', logger, async (req, res) => {
       const { id } = req.params;
       console.log(id);
       const query = { _id: new ObjectId(id) };
