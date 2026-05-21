@@ -29,16 +29,64 @@ async function run() {
     const doctorsCollection = db.collection('doctor');
     const appointmentsCollection = db.collection('appointments');
 
-    app.get('/doctors', async (req, res) => {
-        const cursor = doctorsCollection.find();
-        const doctors = await cursor.toArray();
-        res.send(doctors);
-    })
+    // app.get('/all-appointments', async (req, res) => {
+    //   const cursor = doctorsCollection.find();
+    //   const doctors = await cursor.toArray();
+    //   res.send(doctors);
+    // })
+   app.get('/all-appointments', async (req, res) => {
+      //   console.log(req.query);
 
-    app.get('/all-appointments/:id' , async (req,res) =>{
-      const {id} = req.params;
+      const { searchTerm } = req.query;
+
+      let appointment;
+      //   console.log(search.search);
+
+      //   console.log('from serch 1', search);
+      if (searchTerm) {
+        //   console.log('from serch 1');
+
+        // React core concept => Core
+        // cursor = await coursesCollection.find({
+        //   title: {
+        //     $regex: search,
+        //     $options: 'i',
+        //   },
+        // });
+        appointment = await doctorsCollection.find({
+          $or: [
+            {
+             name: {
+                $regex: searchTerm,
+                $options: 'i',
+              },
+            },
+            {
+              specialty: {
+                $regex: searchTerm,
+                $options: 'i',
+              },
+            },
+          ],
+        });
+
+        // console.log(cursor, 'from search');
+      } else {
+        appointment = doctorsCollection.find();
+      }
+
+      const result = await appointment.toArray();
+      //   console.log(result);
+
+      // console.log(result);
+      res.send(result);
+    });
+
+
+    app.get('/all-appointments/:id', async (req, res) => {
+      const { id } = req.params;
       console.log(id);
-      const query = {_id: new ObjectId(id)};
+      const query = { _id: new ObjectId(id) };
       const doctor = await doctorsCollection.findOne(query);
       console.log(doctor);
       res.send(doctor);
@@ -56,17 +104,17 @@ async function run() {
       res.send(appointments);
     });
 
-    app.delete('/bookings/:id', async (req, res)=>{
-      const {id} = req.params;
-      const query = {_id: new ObjectId(id)};
+    app.delete('/bookings/:id', async (req, res) => {
+      const { id } = req.params;
+      const query = { _id: new ObjectId(id) };
       const result = await appointmentsCollection.deleteOne(query);
       res.send(result);
     })
 
-    app.patch('/bookings/:id', async (req, res)=>{
-      const {id} = req.params;
+    app.patch('/bookings/:id', async (req, res) => {
+      const { id } = req.params;
       const modifiedBooking = req.body;
-      const filter = {_id: new ObjectId(id)};
+      const filter = { _id: new ObjectId(id) };
       const updateDoc = {
         $set: {
           name: modifiedBooking.name,
