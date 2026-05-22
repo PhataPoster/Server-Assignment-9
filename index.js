@@ -123,26 +123,26 @@ async function run() {
       res.send(doctor);
     })
 
-    app.post('/appointments', async (req, res) => {
+    app.post('/appointments',logger, async (req, res) => {
       const appointment = req.body;
       const result = await appointmentsCollection.insertOne(appointment);
       res.send(result);
     });
 
-    app.get('/bookings', async (req, res) => {
+    app.get('/bookings',logger, async (req, res) => {
       const cursor = appointmentsCollection.find();
       const appointments = await cursor.toArray();
       res.send(appointments);
     });
 
-    app.delete('/bookings/:id', async (req, res) => {
+    app.delete('/bookings/:id',logger, async (req, res) => {
       const { id } = req.params;
       const query = { _id: new ObjectId(id) };
       const result = await appointmentsCollection.deleteOne(query);
       res.send(result);
     })
 
-    app.patch('/bookings/:id', async (req, res) => {
+    app.patch('/bookings/:id',logger, async (req, res) => {
       const { id } = req.params;
       const modifiedBooking = req.body;
       const filter = { _id: new ObjectId(id) };
